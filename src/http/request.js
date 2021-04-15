@@ -1,0 +1,90 @@
+import axios from 'axios'
+import Vue from "vue";
+import router from "../router";
+import ElementUI from "element-ui";
+import store from "@/store";
+let noTokenArr = ['/login/check', '/sys/info', '/login'];//哪些接口不需要携带token
+Vue.prototype.$httpUrl = '/api';
+// Vue.prototype.$httpUrl='';//打包时用
+export default function originAxios (option) {
+  let instance = axios.create({
+    //baseURL: '/api', // 请求基地址，部署到nginx中和本地开发时需要；部署到后端项目中时，打包时注释
+    timeout: 10000 // 请求超时时长
+  });
+  //axios拦截器
+ instance.interceptors.request.use(function (config) {
+    let noToken = false;
+    let requestAddress = config.url;
+    console.log("发起请求");
+    console.log(config.url);
+    requestAddress = requestAddress.split("?")[0];
+    try {
+      noTokenArr.forEach(function (item, index) {
+        if (item == requestAddress) {
+          noToken = true;
+          throw new Error('Stop It');
+        }
+      });
+    } catch (e) {
+    }
+    if (!noToken) {
+      if (sessionStorage.getItem('nasToken')) {
+        // 如果设置了token
+        config.headers.common['Authorization'] = 'Bearer ' + sessionStorage.getItem('nasToken')
+        if (!config.hasOwnProperty('params')) {
+          config.params = {
+            lang: localStorage.getItem("qvnas_language")
+          }
+        } else {
+          config.params.lang = localStorage.getItem("qvnas_language")
+        }
+      }
+    } else {
+    }
+    return config
+  })
+  instance.interceptors.response.use(response => {
+    // console.log(response)
+    if (response.data.code === 401) {
+      let token = window.sessionStorage.getItem('nasToken')
+      if (!token) return//防止token失效触发多次重定向
+      window.sessionStorage.removeItem('nasToken');
+      closeNewOpenIframe();
+      store.dispatch('Dialog/clearDialog').then(() => {//清除所有弹框
+        ElementUI.Message.closeAll()
+        ElementUI.Notification.closeAll()
+        router.replace('/webLogin').then(r => {
+          let languge = localStorage.getItem("qvnas_language")
+          languge = languge == 'zh-CN' ? '登陆超时,请重新登陆!' : 'Login timed out, please log in again!'
+          ElementUI.Message({
+            message: languge,/*登陆超时,请重新登陆!*/
+            type: 'warning',
+            duration: 3000,
+            offset: 45
+          });
+        })
+      })
+    }
+    console.log("拿到请求的数据");
+    console.log(response.status,response.data);
+    return response
+  }, error => {
+    console.log(error)
+  })
+  return instance(option)
+}
+
+//关闭新打开的穿口
+function closeNewOpenIframe () {
+  try {
+    Vue.prototype.playVideoWindow.sessionStorage.clear();
+    Vue.prototype.playVideoWindow.close();
+  } catch (e) {
+    Vue.prototype.playVideoWindow = null;
+  }
+  try {
+    Vue.prototype.playIframeWindow.close();
+  } catch (e) {
+    Vue.prototype.playIframeWindow = null;
+  }
+}

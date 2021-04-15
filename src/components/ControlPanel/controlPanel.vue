@@ -1,0 +1,1824 @@
+<template>
+  <!--控制面板-->
+  <div class="1 controlPanel"
+       style="position: relative; background-color: #fff; height: 100%; overflow-y: auto;"
+       v-if="$store.state['Dialog'].dialogShow.control_Panel">
+    <gl-dialog :is-show="showConfirmDialog" @determine="determineEvent" @cancel="closeEvent"
+               @dialogClose="closeEvent"></gl-dialog>
+    <div v-if="show==true" v-cloak>
+      <div class="menuSearch">
+        <el-autocomplete
+          class="inline-input"
+          v-model="menuValue"
+          prefix-icon="iconfont icon-chazhao2"
+          :fetch-suggestions="querySearchAsync"
+          @select="menuHandleSelect"
+          hide-loading
+          :placeholder="$t('common.search')"
+          popper-class="controlMenuSearch"
+          :trigger-on-focus="isTriggerFocus"
+          v-cloak
+        ></el-autocomplete>
+      </div>
+      <div class="category">
+        <div class="category-header">{{$t('controlMenu.fileSharing')}}</div><!--文件共享-->
+        <div class="item-wrap" v-if="items.type=='1'" v-for="(items) in controlPanelData" :key="items.menuId"
+             @click="Openuser(items)" v-cloak>
+          <div class="images" :style="{'backgroundImage':'url('+items.url+')'}"></div>
+          <div class="text">{{textMenu(items)}}</div>
+        </div>
+      </div>
+      <div class="category">
+        <div class="category-header">{{$t('controlMenu.connectivity')}}</div><!--连接性-->
+        <div class="item-wrap" v-if="items.type=='2'" v-for="items in controlPanelData" :key="items.menuId"
+             @click="Openuser(items)" v-cloak>
+          <div class="images" :style="{'backgroundImage':'url('+items.url+')'}"></div>
+          <div class="text">{{textMenu(items)}}</div>
+        </div>
+      </div>
+      <div class="category">
+        <div class="category-header">{{$t('controlMenu.system')}}</div><!--系统-->
+        <div class="item-wrap" v-if="items.type=='3'" v-for="items in controlPanelData" :key="items.menuId"
+             @click="Openuser(items)" v-cloak>
+          <div class="images" :style="{'backgroundImage':'url('+items.url+')'}"></div>
+          <div class="text">{{textMenu(items)}}</div>
+        </div>
+      </div>
+      <!--      <div class="category">-->
+      <!--        <div class="category-header">{{$t('controlMenu.application')}}</div>&lt;!&ndash;应用程序&ndash;&gt;-->
+      <!--        <div class="item-wrap" v-if="items.type=='4'" v-for="items in controlPanelData" :key="items.menuId"-->
+      <!--             @click="Openuser(items)" v-cloak>-->
+      <!--          <div class="images" :style="{'backgroundImage':'url('+items.url+')'}"></div>-->
+      <!--          <div class="text">{{items.menuName}}</div>-->
+      <!--        </div>-->
+      <!--      </div>-->
+    </div>
+    <!--面板内容-->
+    <div v-if="show==false" class="menuContent" v-cloak>
+      <div class="menuLeft">
+        <div class="header">
+          <div class="header_section">
+            <div class="headerBox" @click="showMenuPanel">
+              <button :title="$t('common.home')"></button><!--返回主页-->
+            </div>
+
+            <el-autocomplete
+              class="inline-input"
+              v-model="state"
+              prefix-icon="iconfont icon-chazhao2"
+              :fetch-suggestions="querySearchAsync"
+              @select="handleSelect"
+              hide-loading
+              :placeholder="$t('common.search')"
+              popper-class="controlMenuSearch"
+              :trigger-on-focus="isTriggerFocus"
+            ></el-autocomplete>
+          </div>
+          <div class="box_shadow">
+          </div>
+        </div>
+        <div class="navigationMenu" style="width: 220px;">
+          <div style="overflow-y: auto ;height: 100%">
+            <el-menu
+              class="el-menu-vertical-demo"
+              background-color="#FFF"
+              text-color="#505A64"
+              active-text-color="#0086E5"
+              :default-active="menuindex"
+            >
+              <el-submenu index="1">
+                <template slot="title">
+                  <span>{{$t('controlMenu.fileSharing')}}</span><!--文件共享-->
+                </template>
+                <el-menu-item :index="`${items.menuId}`" v-if="items.type=='1'" v-for="(items) in controlPanelData"
+                              :key="items.menuId" @click="itemsOnClick(items.menuId,`${items.menuId}`)" v-cloak>
+                  <img :src="items.url" alt=""> {{textMenu(items)}}
+                </el-menu-item>
+              </el-submenu>
+              <el-submenu index="2">
+                <template slot="title">
+                  <span>{{$t('controlMenu.connectivity')}}</span><!--连接性-->
+                </template>
+                <el-menu-item :index="`${items.menuId}`" v-if="items.type=='2'" v-for="(items) in controlPanelData"
+                              :key="items.menuId" @click="itemsOnClick(items.menuId,`${items.menuId}`)" v-cloak>
+                  <img :src="items.url" alt=""> {{textMenu(items)}}
+                </el-menu-item>
+              </el-submenu>
+              <el-submenu index="3">
+                <template slot="title">
+                  <span>{{$t('controlMenu.system')}}</span><!--系统-->
+                </template>
+                <el-menu-item :index="`${items.menuId}`" v-if="items.type=='3'" v-for="(items) in controlPanelData"
+                              :key="items.menuId" @click="itemsOnClick(items.menuId,`${items.menuId}`)" v-cloak>
+                  <img :src="items.url" alt=""> {{textMenu(items)}}
+                </el-menu-item>
+              </el-submenu>
+              <!--              <el-submenu index="4">-->
+              <!--                <template slot="title">-->
+              <!--                  <span>应用程序</span>-->
+              <!--                </template>-->
+              <!--                <el-menu-item :index="`${items.menuId}`" v-if="items.type=='4'" v-for="(items) in controlPanelData"-->
+              <!--                              :key="items.menuId" @click="itemsOnClick(items.menuId,`${items.menuId}`)" v-cloak>-->
+              <!--                  <img :src="items.url" alt=""> {{items.menuName}}-->
+              <!--                </el-menu-item>-->
+              <!--              </el-submenu>-->
+            </el-menu>
+          </div>
+        </div>
+      </div>
+      <div class="menuRight-box">
+        <gl-load-animation :is-load-show="showloadding"></gl-load-animation>
+        <!--用户账号-->
+        <div v-show="saveMenuId=='102'" class="menuRight userAccount">
+          <el-tabs class="tabs" v-model="UserActive" type="card">
+            <el-tab-pane :label="$t('tabs.userAccount')" name="user">
+              <div class="user-content">
+                <div class="control-first-btn">
+                  <div class="control-first-btn-box">
+                    <el-dropdown split-button size="mini" trigger="click" @command="handleClick2"
+                                 @click="handleClick('1','1_child')" class="menuBtn">
+                      <!--新增-->
+                      {{$t('user.add')}}
+                      <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="a">{{$t('user.newUser')}}</el-dropdown-item><!--新增用户-->
+                        <!--                      <el-dropdown-item command="b">创建用户</el-dropdown-item>-->
+                      </el-dropdown-menu>
+                    </el-dropdown>
+                    <gl-button-style type="white" :disable="btnStatus" @click="openEditUserDialog()">
+                      {{$t('user.edit')}}
+                    </gl-button-style><!--编辑-->
+                    <gl-button-style type="white" :disable="btnStatus" @click="deleteUserList()">{{$t('user.delete')}}
+                    </gl-button-style><!--删除-->
+                  </div>
+                  <div class="searchInputContainer">
+                    <el-input
+                      :placeholder="$t('common.search')"
+                      prefix-icon="iconfont icon-chazhao2"
+                      @input="searchUserList()"
+                      v-on:keyup.enter="searchUserList()"
+                      v-model="searchUserContent">
+                    </el-input>
+                  </div>
+                </div>
+                <!--table表格-->
+                <div class="userTable">
+                  <el-table
+                    fixed
+                    highlight-current-row
+                    :data="userList"
+                    style="width: 100%;height: 100%"
+                    @row-click="selectUserTableRow"
+                    @row-dblclick="userDoubleClickRow"
+                    @row-contextmenu="userContextmenuRow"
+                    border
+                  >
+                    <el-table-column
+                      sortable
+                      prop="userName"
+                      :label="$t('user.name')"
+                      align="left"
+                      :show-overflow-tooltip="true">
+                    </el-table-column>
+                    <el-table-column
+                      sortable
+                      prop="nickName"
+                      :label="$t('user.nickName')"
+                      align="left"
+                      :show-overflow-tooltip="true">
+                    </el-table-column>
+                    <el-table-column
+                      prop="email"
+                      :label="$t('user.email')"
+                      align="left"
+                      :show-overflow-tooltip="true">
+                    </el-table-column>
+                    <el-table-column
+                      :label="$t('user.description')"
+                      prop="remark"
+                      :show-overflow-tooltip="true"
+                      align="left"
+                    >
+                    </el-table-column>
+                    <el-table-column
+                      prop="userId"
+                      :label="$t('common.status')"
+                      :show-overflow-tooltip="true"
+                      align="center"
+                      header-align="center"
+                    >
+                      <template slot-scope="userList">
+                        <span :style="{color:'#505a64'}" v-if="userList.row.status=='0' ">{{$t('common.normal')}}</span>
+                        <!--正常-->
+                        <span :style="{color:'#FA4B4B'}" v-else>{{$t('common.deactivate')}}</span><!--停用-->
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      width="17"
+                    >
+                    </el-table-column>
+                  </el-table>
+                </div>
+                <!--分页器-->
+                <div class="Pagination_container">
+                  <div class="Pagination_position">
+                    <div class="Pagination_content">
+                      <div class="Pagination_box">
+                        <el-pagination
+                          @size-change="userHandleSizeChange"
+                          @current-change="userHandleCurrentChange"
+                          :current-page="userListData.pageNum"
+                          :page-sizes="[20, 30, 50]"
+                          :page-size="userListData.pageSize"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          :total="userListData.listTotal"
+                          background>
+                        </el-pagination>
+                      </div>
+                      <span :title="$t('common.refresh')" class="Refresh iconfont icon-shuaxin"
+                            @click="userRefresh"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
+            <!--<el-tab-pane label="高级设置" name="second">高级设置</el-tab-pane>-->
+          </el-tabs>
+        </div>
+        <!--文件服务-->
+        <div v-show="saveMenuId=='101'" class="menuRight sysConfigFrom fileServer">
+          <el-tabs class="tabs" v-model="FileActive" type="card">
+            <el-tab-pane label="SMB/AFP/NFS" name="file">
+              <div class="tabContent">
+                <el-collapse v-model='FileModel'>
+                  <el-collapse-item title="SMB" name="fileFirst" class="SMB_container">
+                    <div class="collapse-container">
+                      <div class="collapse-container-top">
+                        <div class="optionChecked">
+                          <el-checkbox v-model="fileServerForm.SMB.open">{{$t('file.enableService')}}</el-checkbox>
+                        </div>
+                      </div>
+                      <div class="collapse-container-bottom">
+                        <ul>
+                          <li>
+                            <span class="inputSpan">{{$t('file.workgroup')}}:</span>
+                            <el-input class="inline-block-input workGroupInput"></el-input>
+                          </li>
+                          <li>
+                            <div class="optionChecked">
+                              <el-checkbox v-model="fileServerForm.SMB.accessPrevVersion">{{$t('file.pastVersion')}}
+                              </el-checkbox>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="optionChecked">
+                              <el-checkbox v-model="fileServerForm.SMB.StartTransferLog">{{$t('file.startLog')}}
+                              </el-checkbox>
+                            </div>
+                          </li>
+                          <li>
+                            <el-button size="small" style="margin-left: 24px;">{{$t('file.logSet')}}</el-button>
+                            <el-button size="small">{{$t('file.viewLog')}}</el-button>
+                          </li>
+                          <li>
+                            <el-button size="small">{{$t('file.advancedSet')}}</el-button>
+                          </li>
+                          <li>
+                            <span class="infoTipTitle">{{$t('file.note')}}</span>
+                            <span class="infoTipContent">
+{{$t('file.noteText')}}
+                             </span>
+                          </li>
+                          <li>
+                            <span class="infoTipTitle">{{$t('file.note')}}</span>
+                            <span class="infoTipContent">
+{{$t('file.noteText1')}}
+                             </span>
+                          </li>
+                        </ul>
+                        <div class="descriptionContainer">
+                          <p class="descriptionTitle">{{$t('file.text')}}</p>
+                          <table>
+                            <tr>
+                              <td class="td_title">{{$t('file.text1')}}</td>
+                              <td class="td_content">\\Qvnas</td>
+                            </tr>
+                            <tr>
+                              <td class="td_title">Mac(Finder):</td>
+                              <td class="td_content">smb://Qvnas</td>
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </el-collapse-item>
+                  <el-collapse-item title="AFP" name="fileTwo" class="AFP_container">
+                    <div class="collapse-container">
+                      <div class="collapse-container-top">
+                        <div class="optionChecked">
+                          <el-checkbox v-model="fileServerForm.SMB.open">{{$t('file.enableAFP')}}</el-checkbox>
+                        </div>
+                      </div>
+                      <div class="collapse-container-bottom">
+                        <ul>
+                          <li>
+                            <div class="optionChecked">
+                              <el-checkbox v-model="fileServerForm.SMB.StartTransferLog">{{$t('file.startLog')}}
+                              </el-checkbox>
+                            </div>
+                          </li>
+                          <li>
+                            <el-button size="small" style="margin-left: 24px;">{{$t('file.viewLog')}}</el-button>
+                          </li>
+                          <li>
+                            <el-button size="small">{{$t('file.advancedSet')}}</el-button>
+                          </li>
+                          <li>
+                            <span class="infoTipTitle">{{$t('file.note')}}</span>
+                            <span class="infoTipContent">
+{{$t('file.noteText2')}}
+                             </span>
+                          </li>
+                          <li>
+                            <span class="infoTipTitle">{{$t('file.note')}}</span>
+                            <span class="infoTipContent">
+ {{$t('file.noteText1')}}
+                             </span>
+                          </li>
+                        </ul>
+                        <div class="descriptionContainer">
+                          <p class="descriptionTitle">{{$t('file.text')}}</p>
+                          <table>
+                            <tr>
+                              <td class="td_title">Mac(Finder):</td>
+                              <td class="td_content">smb://Qvnas</td>
+                            </tr>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </el-collapse-item>
+                  <el-collapse-item title="NFS" name="fileThree" class="NFS_container">
+                    <div class="collapse-title">
+                      <p>{{$t('file.enableAFP')}}</p>
+                    </div>
+                    <div class="collapse-container">
+                      <div class="collapse-container-top">
+                        <div class="optionChecked">
+                          <el-checkbox v-model="fileServerForm.SMB.open">{{$t('file.enableNFS')}}</el-checkbox>
+                        </div>
+                      </div>
+                      <div class="collapse-container-bottom">
+                        <ul>
+                          <li>
+                            <div class="optionChecked">
+                              <el-checkbox v-model="fileServerForm.SMB.accessPrevVersion">
+                                {{$t('file.enableNFSStandBy')}}
+                              </el-checkbox>
+                            </div>
+                          </li>
+                          <li>
+                            <span class="inputSpan">{{$t('file.NFSv4')}}</span>
+                            <el-input class="inline-block-input workGroupInput"></el-input>
+                          </li>
+                          <li>
+                            <el-button size="small">{{$t('file.advancedSet')}}</el-button>
+                          </li>
+                          <li>
+                            <span class="infoTipTitle">{{$t('file.note')}}</span>
+                            <span class="infoTipContent">
+  {{$t('file.noteText3')}}
+                             </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </el-collapse-item>
+                </el-collapse>
+              </div>
+              <div class="tabFooter">
+                <div class="tabFooterBorder">
+                  <div class="btnGroup">
+                    <gl-button-style type="blue" size="medium">{{$t('common.apply')}}</gl-button-style>
+                    <gl-button-style size="medium">{{$t('common.reset')}}</gl-button-style>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+        <!--网络-->
+        <div v-show="saveMenuId=='103'" class="menuRight sysConfigFrom networkCenter">
+          <el-tabs class="tabs" v-model="activeName_Network" type="card" @tab-click="network_tab_active">
+            <el-tab-pane :label="$t('tabs.conventional')" name="Network_General">
+              <div class="tabContent">
+                <el-collapse v-model='NetworkModel'>
+                  <el-collapse-item :title="$t('tabs.conventional')" name="internet" class="base_container">
+                    <div class="collapse-title">
+                      <p>{{$t('netWork.text')}}</p>
+                      <ul>
+                        <li>
+                          <span class="inputSpan1">{{$t('netWork.systemName')}}:</span>
+                          <el-input class="inline-block-input workGroupInput" v-model="systemName"></el-input>
+                        </li>
+                        <li>
+                          <span class="inputSpan1">{{$t('netWork.default')}}(gateway):</span>
+                          <div class="noBorderInput">{{currentIp}}</div>
+                          <!--                          <el-button size="small">编辑</el-button>-->
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="collapse-container">
+                      <div class="collapse-container-top">
+                        <div class="optionChecked">
+                          <el-checkbox v-model="fileServerForm.SMB.open">{{$t('netWork.config')}}</el-checkbox>
+                        </div>
+                      </div>
+                      <div class="collapse-container-bottom">
+                        <ul>
+                          <li>
+                            <span class="inputSpan">{{$t('netWork.preferred')}}:</span>
+                            <el-input class="inline-block-input workGroupInput" v-model="IpAddress"
+                                      :disabled="!fileServerForm.SMB.open"></el-input>
+                          </li>
+                          <li>
+                            <span class="inputSpan">{{$t('netWork.spare')}}:</span>
+                            <el-input class="inline-block-input workGroupInput"></el-input>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </el-collapse-item>
+                  <el-collapse-item :title="$t('netWork.proxy')" name="server" class="ProxyServer_container">
+                    <div class="collapse-container">
+                      <div class="collapse-container-top">
+                        <div class="optionChecked">
+                          <el-checkbox v-model="fileServerForm.SMB.open">{{$t('netWork.connection')}}</el-checkbox>
+                        </div>
+                      </div>
+                      <div class="collapse-container-bottom">
+                        <ul>
+                          <li>
+                            <span class="inputSpan">{{$t('netWork.address')}}:</span>
+                            <el-input class="inline-block-input workGroupInput"></el-input>
+                          </li>
+                          <li>
+                            <span class="inputSpan">{{$t('netWork.port')}}:</span>
+                            <el-input class="inline-block-input workGroupInput"></el-input>
+                          </li>
+                          <li>
+                            <el-button size="small">{{$t('file.advancedSet')}}</el-button>
+                          </li>
+                          <li>
+                            <div class="optionChecked">
+                              <el-checkbox v-model="fileServerForm.SMB.accessPrevVersion">{{$t('netWork.text1')}}
+                              </el-checkbox>
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </el-collapse-item>
+                </el-collapse>
+              </div>
+              <div class="tabFooter">
+                <div class="tabFooterBorder">
+                  <div class="btnGroup">
+                    <gl-button-style type="blue" size="medium">{{$t('common.apply')}}</gl-button-style>
+                    <gl-button-style size="medium">{{$t('common.reset')}}</gl-button-style>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
+            <!--            <el-tab-pane label="网络概要" name="network_des">-->
+
+            <!--            </el-tab-pane>-->
+            <!--            <el-tab-pane label="全局配置" name="globalConfig">-->
+
+            <!--            </el-tab-pane>-->
+            <!--            <el-tab-pane label="接口" name="interface">-->
+
+            <!--            </el-tab-pane>-->
+            <!--            <el-tab-pane label="静态路由" name="staticRouter">-->
+
+            <!--            </el-tab-pane>-->
+          </el-tabs>
+        </div>
+        <div v-show="saveMenuId=='104'" class="menuRight infoCenter">
+          <el-tabs class="tabs" v-model="storageActive" @tab-click="tabSwitch" type="card">
+            <el-tab-pane :label="$t('tabs.conventional')" name="conventional">
+              <div class="tabContent">
+                <el-collapse v-model="collapseModel">
+                  <el-collapse-item :title="$t('systemInfo.base')" name="systemInfo"
+                                    class="Basic_Information_container"><!--基本信息-->
+                    <div class="collapse-container">
+                      <table cellspacing="0">
+                        <tr>
+                          <td class="td_title">{{$t('systemInfo.version')}}</td><!--版本-->
+                          <td class="td_content">{{styleInof.version}}</td>
+                        </tr>
+                        <tr>
+                          <td class="td_title">{{$t('systemInfo.productName')}}</td><!--产品名称-->
+                          <td class="td_content">{{styleInof.hostname}}</td>
+                        </tr>
+                        <tr>
+                          <td class="td_title">{{$t('systemInfo.cpuCores')}}</td><!--CPU 内核数-->
+                          <td class="td_content">{{styleInof.cores}}</td>
+                        </tr>
+                        <tr>
+                          <td class="td_title">{{$t('systemInfo.cpuProcessor')}}</td><!--CPU 处理器-->
+                          <td class="td_content">{{styleInof.model}}</td>
+                        </tr>
+                        <tr>
+                          <td class="td_title">{{$t('systemInfo.hours')}}</td><!--运行时间-->
+                          <td class="td_content">{{styleInof.uptime}}</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </el-collapse-item>
+                  <!--                  <el-collapse-item title="时间信息" name="1" class="Time_information_container">-->
+                  <!--                    <div class="collapse-container">-->
+                  <!--                      <table cellspacing="0">-->
+                  <!--                        <tr>-->
+                  <!--                          <td class="td_title">服务器地址</td>-->
+                  <!--                          <td class="td_content">pool.ntp.org</td>-->
+                  <!--                        </tr>-->
+                  <!--                        <tr>-->
+                  <!--                          <td class="td_title">时区</td>-->
+                  <!--                          <td class="td_content">(GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi</td>-->
+                  <!--                        </tr>-->
+                  <!--                      </table>-->
+                  <!--                    </div>-->
+                  <!--                  </el-collapse-item>-->
+                  <!--                  <el-collapse-item title="外接设备" name="1" class="External_Devices_Container">-->
+                  <!--                    <div class="collapse-container">-->
+                  <!--                      <table cellspacing="0">-->
+                  <!--                        <tr>-->
+                  <!--                          <td class="td_title">尚未连接外接设备。</td>-->
+                  <!--                          <td class="td_content"></td>-->
+                  <!--                        </tr>-->
+                  <!--                      </table>-->
+                  <!--                    </div>-->
+                  <!--                  </el-collapse-item>-->
+                </el-collapse>
+              </div>
+            </el-tab-pane>
+            <el-tab-pane :label="$t('storage.storage')"><!--存储-->
+              <div class="container_storagePanel">
+                <header>{{$t('desktopMenu.storageSpace')}}</header><!--存储空间-->
+                <memory :memoryData="memoryData" v-if="showMemoryCharts"></memory>
+                <header>{{$t('storage.disk')}}</header><!--硬盘-->
+                <footer>
+                  <!--table表格-->
+                  <el-table
+                    :data="diskList"
+                    style="width: 100%"
+                    height="100%"
+                    border
+                  >
+                    <el-table-column type="expand">
+                      <template slot-scope="props">
+                        <el-form label-position="left" class="demo-table-expand">
+                          <el-form-item :label="$t('storage.type')+':'"><!--池盘类型-->
+                            <div>{{ props.row.type}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('user.description')+':'"><!--描述-->
+                            <div>{{ props.row.description==''?'N/A':props.row.description}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.model')+':'"><!--型号-->
+                            <div>{{ props.row.serial}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.transmissionMode')+':'"><!--传输模式-->
+                            <div>{{ props.row.transfermode}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.rotatingSpeed')+':'"><!--转速-->
+                            <div>{{ props.row.rotationrate}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.HDDSleep')+':'"><!--HDD休眠-->
+                            <div>{{ props.row.hddstandby}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.advanced')+':'"><!--高级电源管理-->
+                            <div>{{ props.row.advpowermgmt}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.noiseLevel')+':'"><!--噪音等级-->
+                            <div>{{ props.row.acousticlevel}}</div>
+                          </el-form-item>
+                          <el-form-item :label="$t('storage.enable')+':'">
+                            <div>{{ props.row.togglesmart}}</div>
+                          </el-form-item>
+                        </el-form>
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      sortable
+                      align="left"
+                      :show-overflow-tooltip="true"
+                      :label="$t('storage.numbering')"
+                      prop="name">
+                    </el-table-column>
+                    <el-table-column
+                      sortable
+                      align="left"
+                      :show-overflow-tooltip="true"
+                      :label="$t('storage.model')"
+                      prop="serial">
+                    </el-table-column>
+                    <el-table-column
+                      sortable
+                      align="left"
+                      :show-overflow-tooltip="true"
+                      :label="$t('common.size')">
+                      <template slot-scope="diskList">
+                        <span>{{diskList.row.size|filterSize}}</span>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </footer>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+        <!--        <div v-show="saveMenuId=='105'" class="menuRight sysConfigFrom sysUpdate">-->
+        <!--          <el-tabs class="tabs" v-model="UpdateActive" type="card">-->
+        <!--            <el-tab-pane label="常规" name="firlst1">-->
+        <!--              <div class="tabContent">-->
+        <!--                <div class="collapse-title">-->
+        <!--                  <p>Synology 会不时发布 DSM 更新。安装更新版本的 DSM 以获得新功能、安全补丁以及改进的系统稳定性。</p>-->
+        <!--                  <ul>-->
+        <!--                    <li class="noMarginBottom">-->
+        <!--                      <span class="inputSpan1">产品型号:</span>-->
+        <!--                      <div class="noBorderInput widthAuto">DS218+</div>-->
+        <!--                    </li>-->
+        <!--                    <li class="noMarginBottom">-->
+        <!--                      <span class="inputSpan1"> DSM 版本:</span>-->
+        <!--                      <div class="noBorderInput widthAuto">-->
+        <!--                        <span> DSM 版本 DSM 6.2.3-25426 (</span>-->
+        <!--                        <span class="specialTip">发行说明</span>-->
+        <!--                        <span>)</span>-->
+        <!--                      </div>-->
+        <!--                    </li>-->
+        <!--                    <li class="noMarginBottom">-->
+        <!--                      <span class="inputSpan1"> 状态:</span>-->
+        <!--                      <div class="noBorderInput widthAuto">-->
+        <!--                        <span class="infoTipTitle"> DSM 6.2.3-25426 Update 2 版本可下载。</span>-->
+        <!--                        <span>(</span>-->
+        <!--                        <span class="specialTip">发行说明</span>-->
+        <!--                        <span>)</span>-->
+        <!--                        <i class="el-icon-info"></i>-->
+        <!--                      </div>-->
+        <!--                    </li>-->
+        <!--                    <li class="noMarginBottom">-->
+        <!--                      <span class="inputSpan1"> 状态:</span>-->
+        <!--                      <div class="noBorderInput">-->
+        <!--                        <el-button size="small">下载</el-button>-->
+        <!--                      </div>-->
+        <!--                    </li>-->
+        <!--                    <li class="noMarginBottom">-->
+        <!--                      <el-button size="small">手动更新 DSM</el-button>-->
+        <!--                      <el-button size="small">更新设置</el-button>-->
+        <!--                    </li>-->
+        <!--                  </ul>-->
+        <!--                </div>-->
+        <!--              </div>-->
+        <!--            </el-tab-pane>-->
+        <!--          </el-tabs>-->
+        <!--        </div>-->
+      </div>
+    </div>
+    <!--error错误提示-->
+    <gl-warning-dialog :is-show="ShowError" @warningDialogClose="warningDialogClose">{{errorMessage}}
+    </gl-warning-dialog>
+  </div>
+</template>
+<script>
+  import {mapState} from "vuex"
+  import memory from "@components/storagePanel/memoryCharts/memory";
+  import {getUserList, userDelete} from '@api/user/userContact'
+  import {controlPanelMenuSearch} from '@api/menu/menuContact'
+  import userDialog from '@/common/js/ControlPanel/userDialog'
+  import {debounce} from "@common/common/debounceAndThrottle"
+  import {assign_compatible} from "@common/js/publicMethod/publicMethod";
+  export default {
+    name: 'WindowsPanel',
+    props: ['controlPanelData'],
+    components: {
+      memory
+    },
+    data: function () {
+      return {
+        saveInputStr: '',
+        isTriggerFocus: false,
+        state: '',
+        menuValue: '',
+        ShowError: false,//是否显示错误信息
+        errorMessage: '',//错误信息
+        //在自组件中保存父组件传递过来的数据
+        saveControlPanelData: this.controlPanelData,
+        show: true,
+        searchUserContent: '',
+        showloadding: false,
+        // 保存点击的菜单id
+        saveMenuId: null,
+        menuindex: '',
+        //tabs默认展示的第一个选项卡
+        FileActive: 'file',
+        UserActive: 'user',
+        storageActive: 'conventional',
+        UpdateActive: 'firlst1',
+        activeName_Network: 'Network_General',
+        NetworkModel: ['internet', 'server'],
+        collapseModel: ['systemInfo'],
+        FileModel: ['fileFirst', 'fileTwo', 'fileThree'],
+        systemName: 'QvNas',
+        // userLoadAnimation: false,//加载动画展示
+        userDialogType: 0,//0 添加 //1 编辑
+        userListData: {
+          pageNum: 1,
+          pageSize: 20,
+          listTotal: 0
+        },
+        userList: [],//用户列表
+        selectedUserTableNets: {},//用户选中列表
+        btnStatus: false,//按钮是否禁用
+        fileServerForm: {
+          SMB: {
+            open: true,
+            accessPrevVersion: true,
+            StartTransferLog: true,
+          },
+          AFP: {},
+          NFS: {},
+        },
+        trueRefreshUserList: false,//配合eventBus 刷新userList
+        showConfirmDialog: false,//是否显示确认删除弹框
+        styleInof: {},
+        // userMsg: {},//当前登陆的用户信息
+        IpAddress: '192.168.3.180',
+        memoryData: {//存储的数据
+          total:0,
+          free:0,
+          zfs:0,
+          Services:0
+        },
+        showMemoryCharts:false,
+        diskList:[]
+      }
+    },
+    computed: {
+      currentIp () {
+        return this.currentUserInfo.loginIp
+      },
+      textMenu () {
+        return function (items) {
+          return this.currentUserInfo.userLanguage == 'zh-CN' ? items.menuName : items.remark
+        }
+      },
+      ...mapState('v_scoket',{
+        disk_query:state=>state.disk_query
+      }),
+      ...mapState({
+        currentUserInfo:state=>state['currentUserInfo']
+      })
+    },
+    methods: {
+      menuHandleSelect (item) {
+        this.menuValue = this.saveInputStr
+        this.Openuser(item)
+      },
+      handleSelect (item) {
+        this.state = this.saveInputStr
+        this.saveMenuId = item.menuId
+        this.$nextTick(() => {
+          this.menuindex = item.menuId
+        })
+      },
+      async querySearchAsync (queryString, cd) {
+        this.saveInputStr = queryString
+        let {data: res} = await controlPanelMenuSearch({
+          menuName: queryString
+        })
+        if (res.code == 200) {
+          let restaurants = [];
+          res.data.forEach(item => {
+            restaurants.push({
+              value: item.menuName,
+              menuId: item.menuId
+            })
+          })
+          cd(restaurants)
+        }
+      },
+      //网络处于活跃状态的标签
+      network_tab_active (active) {
+      },
+      tabSwitch (Instance) {
+        console.log(Instance)
+        this.showMemoryCharts = Instance.label == this.$t('storage.storage');
+        if (Instance.label==this.$t('storage.storage')){
+          this.showloadding=true
+          this.getPoolQuery()
+        }
+      },
+      //关闭错误提示
+      warningDialogClose () {
+        this.ShowError = false
+      },
+      closeEvent: function () {//关闭确认删除弹框
+        this.showConfirmDialog = false;
+      },
+      determineEvent: function () {//确认 删除
+        if (!this.currentUserInfo.delFlag) {
+          this.showConfirmDialog = false;
+          this.errorMessage = this.$t('reminder.authority')
+          this.ShowError = true
+          return
+        }
+        this.deleteUser()
+        // var getUserId = this.selectedUserTableNets.id;
+        // this.postDeleteUser(getUserId)
+        this.showConfirmDialog = false;
+        this.showloadding = true
+      },
+      deleteUserList: function () {//删除用户
+        if (!this.currentUserInfo.delFlag) {
+          this.showConfirmDialog = false;
+          this.errorMessage = this.$t('reminder.authority')
+          this.ShowError = true
+          return
+        }
+        this.showConfirmDialog = true;
+      },
+      // postDeleteUser: async function (getUserId) {//提交删除用户
+      //   this.$parent.$parent.refreshWebsocketData("user-delete", getUserId);
+      // },
+      //获取所有池
+      getPoolQuery () {
+        this.$store.commit('v_scoket/socketSend',['disk-query'])
+      },
+      async deleteUser () {
+        let {data: res} = await userDelete([this.selectedUserTableNets.userId])
+        if (res.code == 200) {
+          await this.getUserList();
+        } else {
+          this.errorMessage = this.$t('reminder.failedToDelete')/*删除失败*/
+          this.ShowError = true
+        }
+        this.showloadding = false
+        this.$parent.$parent.refreshWebsocketData('user-delete', 'del_websoket_data')
+      },
+      openEditUserDialog: function () {//编辑  用户
+        if (!this.currentUserInfo.delFlag) {
+          this.showConfirmDialog = false;
+          this.errorMessage = this.$t('reminder.authority')
+          this.ShowError = true
+          return
+        }
+        let getUserName = this.selectedUserTableNets.userName;
+        this.$EventBus.$emit('tableParams', this.selectedUserTableNets, this.userList);
+        userDialog.$emit('dialogType', 1);//编辑
+        //判断这个弹框是否已经存在，没有存在就创建，否则就打开
+        let dialogConfig = {
+          width: 800,
+          height: 440,
+          minHeight: 400,
+          minWidth: 700,
+          title: getUserName
+        };
+        this.$emit('clicks', '1', '1_child', dialogConfig)
+      },
+      searchUserList: debounce('searchUser', 400, false),
+      searchUser () {
+        this.userListData.pageNum = 1;
+        this.getUserList()
+      },
+      getUserList: async function () {//加载用户
+        this.showloadding = true
+        this.btnStatus = true;
+        let deal_url
+        if (this.searchUserContent == '') {
+          deal_url = {
+            pageNum: this.userListData.pageNum,
+            pageSize: this.userListData.pageSize,
+            lang: localStorage.getItem("qvnas_language")
+          }
+        } else {
+          deal_url = {
+            pageNum: this.userListData.pageNum,
+            pageSize: this.userListData.pageSize,
+            userName: this.searchUserContent,
+            lang: localStorage.getItem("qvnas_language")
+          }
+        }
+        let {data: res} = await getUserList(deal_url)
+        console.log("拿到的用户列表的数据");
+        console.log(JSON.stringify(res));
+        if (res.code == 200) {
+          this.userListData.pageNum = res.data.pageNum;
+          this.userListData.pageSize = res.data.pageSize;
+          this.userListData.listTotal = res.data.total;
+          this.userList = res.data.list;
+          this.showloadding = false
+        } else {
+          this.showloadding = false
+          this.errorMessage = this.$t('reminder.userListError') //'用户列表获取失败!'
+          this.ShowError = true
+        }
+      },
+      //显示数量
+      userHandleSizeChange (value) {
+        this.userListData.pageSize = value
+        this.getUserList()
+      },
+      //当前页
+      userHandleCurrentChange (value) {
+        this.userListData.pageNum = value
+        this.getUserList()
+      },
+      //点击表格行
+      selectUserTableRow: function (row, column, event) {
+        this.selectedUserTableNets = row;
+        this.btnStatus = row.userName == 'root' || row.userName == this.currentUserInfo.userName;
+      },
+      //双击行
+      userDoubleClickRow: function (row, column, event) {
+        this.selectedUserTableNets = row;
+        //需要打开编辑弹框
+      },
+      userContextmenuRow: function (row, column, event) {
+        this.selectedUserTableNets = row;
+        //显示右击操作菜单
+      },
+      //刷新按钮
+      userRefresh () {//刷新用户列表
+        this.userListData.pageNum = 1;
+        this.userListData.pageSize = 20;
+        this.searchUserContent = '';
+        this.getUserList()
+      },
+      Openuser: function (item) {//控制面版切换
+        this.btnStatus = true
+        let show = document.querySelector('.popupwindow_content')
+        show.style.overflow = 'hidden'
+        this.show = false
+        this.saveMenuId = item.menuId
+        if (item.menuId == 102) {
+          this.getUserList();
+        }
+        let _this = this
+        this.$nextTick(function () {
+          _this.menuindex = item.menuId
+        })
+      },
+      // 显示菜单
+      showMenuPanel () {
+        this.show = true
+        this.menuindex = null
+      },
+      itemsOnClick (menuId, index) {//控制面版左侧导航切换
+        if (this.saveMenuId === menuId) {
+          return
+        }
+        this.saveMenuId = menuId;
+        if (menuId == 102) {//用户账号
+          this.getUserList();
+        }
+      },
+      //点击新增用户
+      handleClick: function (parentId, selfId) {
+        if (!this.currentUserInfo.delFlag) {
+          this.showConfirmDialog = false;
+          this.errorMessage = this.$t('reminder.authority')
+          this.ShowError = true
+          return
+        }
+        this.userDialogType = 0;
+        userDialog.$emit('dialogType', 0); //添加
+        let dialogConfig = {
+          width: 800,
+          minWidth: 700,
+          height: 550,
+          minHeight: 400,
+          title: this.$t('title.userCreationWizard')/*新增用户向导*/
+        };
+        this.$emit('clicks', parentId, selfId, dialogConfig);
+      },
+      handleClick2 (command) {
+        if (command == 'a') {
+          this.handleClick('1', '1_child')
+        } else if (command == 'b') {
+          this.openEditUserDialog()
+        }
+      }
+    },
+    watch: {
+      trueRefreshUserList (val) {
+        if (val) {
+          this.getUserList();
+          this.trueRefreshUserList = false;//传当前行数据
+          userDialog.$emit('trueRefreshUserList', false);//传当前行数据
+        }
+      },
+      "$store.state.Dialog.dialogShow.control_Panel" (val) {
+        if (!val) {
+          assign_compatible()
+          Object.assign(this.$data, this.$options.data.call(this))
+        }
+      },
+      saveMenuId: function (val) {//监听左侧边栏切换
+        this.showloadding=false
+        // //这是加载都需要隐藏
+        // this.showloadding = false
+      },
+      disk_query(val){
+        this.showloadding=false
+        if (!val)return
+        if (val.error){
+          this.ShowError=true
+          this.errorMessage=this.$t('reminder.getDiskError')
+          return;
+        }
+        this.diskList=val.result
+      },
+      "$store.state.v_scoket.user_delete" () {
+        if (this.$store.state.v_scoket.user_delete != null) {
+          if (typeof this.$store.state.v_scoket.user_delete.result === 'number') {
+            this.$parent.$parent.refreshWebsocketData('user-delete', 'del_websoket_data');
+            this.deleteUser()
+          } else {
+            this.showloadding = false
+            this.errorMessage = this.$t('reminder.failedToDelete')/*删除失败*/
+            this.ShowError = true
+          }
+        }
+      },
+      "$store.state.v_scoket.system_info" () {
+        if (this.$store.state.v_scoket.system_info != null) {
+          this.styleInof = this.$store.state.v_scoket.system_info.result
+        }
+      },
+      "$store.state.v_scoket.reporting_realtime" (val) {//cpu
+        if (!val)return
+          this.memoryData = this.$store.getters["v_scoket/filter_realtime_memory"]
+      },
+    },
+    created () {
+      let _this = this
+      userDialog.$on('trueRefreshUserList', (message) => {
+        this.trueRefreshUserList = message;
+      })
+    },
+    destroyed () {
+      userDialog.$off('trueRefreshUserList')
+    },
+    mounted () {
+
+    },
+    beforeDestroy () {
+      /* $('.popupwindow_container').hide()
+       this.$router.go(0)*/
+    },
+    filters: {}
+  }
+</script>
+
+<style lang="less" scoped>
+  @deep: ~">>>";
+  /*-----------用户账号------------ */
+  /*列表 表格的padding值 及样式*/
+  @{deep}.el-table td, .el-table th {
+    padding: 5px !important;
+  }
+
+  @{deep}.el-table td {
+    border: 0 !important;
+    border-bottom: 1px solid #EBEEF5 !important;
+  }
+
+  @{deep}.el-table th > .cell {
+    /*text-align: center;*/
+    color: #0086E5;
+    font-size: 12px;
+    font-weight: 400;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  @{deep}.el-table .cell {
+    /*text-align: center;*/
+    font-size: 12px;
+  }
+
+  @{deep}.el-table--border {
+    border: 0;
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    overflow-y: auto !important;
+    /*margin-bottom: 34px;*/
+  }
+
+  @{deep}.el-table__body-wrapper {
+    /*flex: 1;*/
+    box-sizing: border-box;
+    overflow-y: auto !important;
+  }
+
+  @{deep}.el-table--border::after {
+    width: 0;
+    background-color: #fff;
+  }
+
+  @{deep}.el-table::before {
+    background-color: #fff;
+  }
+
+  /*搜索框的样式*/
+  @{deep}.searchInputContainer .el-input__inner {
+    height: 28px !important;
+    line-height: 28px !important;
+  }
+
+  @{deep}.searchInputContainer .iconfont {
+    font-size: 16px !important;
+    line-height: 28px !important;
+  }
+
+  /*------------文件服务 系统更新和还原 网络中心--------*/
+  /*下拉面板*/
+  @{deep}.sysConfigFrom .el-collapse-item__header {
+    color: #0086E5;
+    padding-left: 36px;
+    position: relative;
+    border-bottom: 1px dashed #EBEEF5;
+    font-size: 15px;
+  }
+
+  @{deep}.sysConfigFrom i.el-collapse-item__arrow {
+    float: left;
+    font-weight: 900;
+    font-size: 16px;
+    position: absolute;
+    left: 13px;
+    color: #0086E5;
+  }
+
+  @{deep}.sysConfigFrom .el-collapse {
+    border-top: 0;
+    border-bottom: 0;
+  }
+
+  @{deep}.sysConfigFrom .el-collapse-item__wrap {
+    border-bottom: 0;
+  }
+
+  @{deep}.sysConfigFrom .el-collapse-item__content {
+    padding-bottom: 10px;
+  }
+
+  /*按钮和input*/
+  @{deep}.sysConfigFrom .inline-block-input.el-input {
+    display: inline-block;
+    width: 182px;
+  }
+
+  @{deep}.sysConfigFrom .el-input__inner {
+    height: 33px;
+    line-height: 33px;
+  }
+
+  @{deep}.sysConfigFrom button.el-button.el-button--default.el-button--small {
+    background: #F0F5FA;
+    border-color: #C8D2DC;
+  }
+
+  .tabContent {
+    padding-top: 5px;
+  }
+
+  .sysConfigFrom {
+    color: #505A64;
+
+    .tabContent {
+      color: #505A64;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+
+      span.infoTipTitle {
+        color: #00A66E;
+        padding-right: 10px;
+      }
+
+      span.specialTip {
+        color: #0086E5;
+        font-weight: 700;
+      }
+
+      .collapse-title {
+        margin-left: 16px;
+        font-size: 12px;
+
+        ul {
+          margin-top: 8px;
+
+          li {
+            color: #606266;
+            margin-bottom: 8px;
+
+            span.inputSpan1 {
+              width: 244px;
+              display: inline-block;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              vertical-align: middle;
+            }
+
+            .noBorderInput {
+              width: 200px;
+              display: inline-block;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              width: 182px;
+              height: 33px;
+              line-height: 33px;
+              vertical-align: middle;
+            }
+
+            .widthAuto {
+              width: auto;
+            }
+
+            i.el-icon-info {
+              color: #0086E5;
+              font-size: 20px;
+              vertical-align: middle;
+              margin-left: 5px;
+            }
+          }
+        }
+
+        p {
+          margin-bottom: 0;
+        }
+      }
+
+      .collapse-container {
+        padding-left: 17px;
+        padding-top: 10px;
+
+        ul {
+          margin-left: 24px;
+
+          li {
+            margin-bottom: 10px;
+            color: #606266;
+            margin-bottom: 8px;
+
+            span.inputSpan {
+              width: 220px;
+              display: inline-block;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              vertical-align: middle;
+            }
+          }
+
+          li.noMarginBottom {
+            margin-bottom: 0;
+          }
+
+        }
+
+        .descriptionContainer {
+          margin-left: 24px;
+          background-color: #F2FAFF;
+          border: 1px solid #B6D9F2;
+          padding-left: 10px;
+          padding-right: 10px;
+          width: 90%;
+          color: #606266;
+
+          .descriptionContainer p.descriptionTitle {
+            margin-top: 6px;
+            margin-bottom: 2px;
+          }
+
+          table {
+            margin-top: -10px;
+
+            .td_title {
+              font-weight: bold;
+              padding-right: 50px;
+            }
+
+            .td_content {
+              color: #0086e5;
+              font-weight: 900;
+            }
+          }
+        }
+      }
+    }
+
+    .AFP_container .collapse-container-bottom li, .NFS_container .collapse-container-bottom li {
+      margin-top: 5px;
+      color: #505A64;
+    }
+
+    .tabFooter {
+      padding: 0 10px;
+      text-align: right;
+      margin-bottom: 0px;
+
+      .tabFooterBorder {
+        background-image: url("/static/images/global/shadow_footbar.png");
+        background-repeat: repeat-x;
+        background-color: transparent;
+        border: 0px;
+        padding-top: 16px;
+        padding-bottom: 0;
+
+        .btnGroup {
+          button {
+            padding-left: 25px;
+            padding-right: 25px;
+          }
+        }
+      }
+    }
+  }
+
+  /*--------信息中心-----------*/
+  /*下拉面板*/
+  @{deep}.infoCenter .el-collapse-item__header {
+    padding-left: 36px;
+    position: relative;
+    border-bottom: 1px solid #ebf0f5;
+    color: #6b95b2;
+    font-weight: bold;
+    font-size: 12px;
+    height: 26px;
+    line-height: 26px;
+    border-top: 1px solid #ebf0f5;
+  }
+
+  @{deep}.infoCenter i.el-collapse-item__arrow {
+    float: left;
+    font-weight: 900;
+    position: absolute;
+    left: 13px;
+  }
+
+  @{deep}.infoCenter .el-collapse {
+    border-top: 0;
+    border-bottom: 0;
+  }
+
+  @{deep}.infoCenter .el-collapse-item__wrap {
+    border-bottom: 0;
+  }
+
+  @{deep}.infoCenter .el-collapse-item__content {
+    padding-bottom: 0;
+  }
+
+  .infoCenter {
+    .container_storagePanel {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      header {
+        font-size: 15px;
+        font-weight: normal;
+        height: 28px;
+        line-height: 28px;
+        border-bottom: 1px dashed #D7E1EB;
+        padding: 0;
+        color: #0086E5;
+      }
+
+      article {
+        width: 100%;
+        padding-top: 10px;
+        height: 210px;
+        margin-left: 64px;
+        /*margin-top: 33px;*/
+
+        .memory_box {
+          height: 210px;
+          display: flex;
+          width: 100%;
+
+          .memory {
+            height: 200px;
+            width: 240px;
+          }
+
+          .memory_title {
+            width: 240px;
+            height: 200px;
+            padding-top: 6px;
+            box-sizing: border-box;
+            padding-left: 21px;
+
+            .memory_total_box {
+              .total {
+                font-size: 30px;
+                color: #505A64;
+              }
+
+              .title {
+                font-size: 14px;
+                color: #505A64;
+              }
+            }
+
+            div {
+              font-size: 14px;
+              color: #505A64;
+              margin-bottom: 5px;
+
+              .circle {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+              }
+            }
+          }
+        }
+      }
+
+      footer {
+        overflow-y: auto;
+        flex: 1;
+        padding-top: 10px;
+      }
+    }
+
+    footer @{deep}.el-form-item {
+      margin-bottom: 0;
+      padding-left: 10px;
+    }
+
+    .collapse-container {
+      table {
+        width: 100%;
+
+        tr {
+          color: #505A64;
+
+          .td_title {
+            font-weight: bold;
+            border-bottom: 1px solid #ebf0f5;
+            padding-left: 34px;
+            font-size: 12px;
+          }
+
+          .td_content {
+            border-bottom: 1px solid #ebf0f5;
+            vertical-align: middle;
+
+            .syno-sysinfo-temp.syno-sysinfo-nt {
+              display: inline-block;
+              width: 16px;
+              height: 16px;
+              background: #1eb300;
+              border-radius: 50%;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  /*------------弹框整体布局-------------*/
+  /*复选框*/
+  @{deep}.el-checkbox__input.is-checked + .el-checkbox__label {
+    color: #505A64;
+  }
+
+  @{deep}.tabs .el-tabs__content .el-tab-pane {
+    /*padding-top: 6px;*/
+    /*margin-top: -6px;*/
+  }
+
+  @{deep}.el-tabs__active-bar {
+    position: absolute;
+    bottom: 0;
+    /*left: -15px;*/
+  }
+
+  /*控制面板样式*/
+  .category-header {
+    height: 28px;
+    line-height: 28px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #0086E5;
+    border-bottom: 1px dashed #D7E1EB;
+    padding-left: 8px;
+    text-align: left;
+  }
+
+  .menuSearch {
+    margin: 5px 0;
+  }
+
+  .category {
+    margin-bottom: 100px;
+  }
+
+  .item-wrap {
+    float: left;
+    text-align: center;
+    padding: 12px 3px 0px 3px;
+    width: 100px;
+    height: 80px;
+    cursor: pointer;
+    overflow: visible;
+    /*background-color: pink;*/
+
+    .images {
+      height: 50px;
+      background-repeat: no-repeat;
+      margin-left: 25px;
+    }
+
+    .text {
+      color: #505A64;
+      font-size: 12px;
+      line-height: 16px;
+      height: 32px;
+      margin-top: 2px;
+      overflow: visible;
+    }
+  }
+
+  .menuContent {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /*margin-top: -32px;*/
+    /*display: flex;*/
+  }
+
+  .menuLeft {
+    box-sizing: border-box;
+    /*margin-right: 10px;*/
+    width: 220px;
+    height: 100%;
+    float: left;
+    position: relative;
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*padding-top: 32px;*/
+
+    .navigationMenu {
+      position: absolute;
+      top: 33px;
+      width: 100%;
+      bottom: 0;
+    }
+
+    .header {
+      height: 33px;
+      width: 220px;
+      /*margin-bottom: 10px;*/
+      /*padding: 0 5px;*/
+      display: flex;
+      flex-direction: column;
+
+      .header_section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .box_shadow {
+        height: 8px;
+        background-image: linear-gradient(#ffffff, rgba(255, 255, 255, 0));
+      }
+    }
+
+    .navigationMenu {
+      overflow: hidden;
+      /*box-sizing: border-box;*/
+      overflow-y: auto;
+      flex: 1;
+      /*height: 100%;*/
+      /*margin-top: -30px;*/
+      /*padding-top: 31px;*/
+    }
+
+    .headerBox {
+      width: 38px;
+      border: solid 1px #C8D2DC;
+      border-radius: 2px;
+      margin-right: 8px;
+      text-align: center;
+      background-image: linear-gradient(#f5faff, #f0f5fa);
+      background-color: #F0F5FA;
+    }
+
+    .headerBox:hover {
+      border: solid 1px #B4BEC8;
+      background-image: linear-gradient(#f5faff, #ebf0f5);
+      background-color: #EBF0F5;
+    }
+
+    .headerBox:active {
+      border: solid 1px #B4BEC8;
+      background-image: linear-gradient(#ebf0f5, #e6ebf0);
+      background-color: #E6EBF0;
+    }
+
+    .header .headerBox button {
+      border: 0;
+      background-color: transparent;
+      margin: 0;
+      overflow: visible;
+      -moz-outline: 0 none;
+      outline: 0;
+      cursor: pointer;
+      height: 26px;
+      font-size: 12px;
+      padding-right: 14px;
+      background-repeat: no-repeat;
+      vertical-align: top;
+      display: inline-block;
+      width: 24px;
+      background: url("/static/images/controlPanel/sprite-sfb0c4ae7c4.png") 0 -976px;
+    }
+  }
+
+  .menuLeft div:nth-child(2) {
+    padding-left: 5px !important;
+  }
+
+  .menuRight-box {
+    /*width: 100%;*/
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: hidden; //注意在ie下你使用overflow hidden会隐藏某个元素，因为盒模型不一样
+    position: relative;
+    margin-left: 230px;
+
+    .menuRight {
+      width: 100%;
+      height: 100%;
+      border-left: 1px solid #E4E5E5;
+      box-sizing: border-box;
+      /*overflow-y: auto;*/
+      position: relative;
+      overflow: hidden;
+      padding-top: 6px;
+      padding-left: 14px;
+
+      .user-content {
+        box-sizing: border-box;
+        height: 100%;
+        position: relative;
+
+        .control-first-btn {
+          width: 100%;
+          position: relative;
+          height: 44px;
+
+          .searchInputContainer {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+
+          .control-first-btn-box {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+        }
+
+        .userTable {
+          position: absolute;
+          top: 44px;
+          width: 100%;
+          bottom: 44px;
+        }
+
+        .control-first-btn@{deep}.el-button:active {
+          color: #505A64;
+          border-color: #B4BEC8;
+          /*outline: 0;*/
+          background-image: linear-gradient(#ebf0f5, #e6ebf0);
+          background-color: #E6EBF0;
+        }
+
+        .control-first-btn@{deep}.el-button {
+          border-color: #C8D2DC;
+          color: #505A64;
+          background-image: linear-gradient(#f5faff, #f0f5fa);
+          background-color: #F0F5FA;
+        }
+
+        .control-first-btn@{deep}.el-button:hover {
+          color: #505A64;
+          border-color: #B4BEC8;
+          /*outline: 0;*/
+          background-image: linear-gradient(#f5faff, #ebf0f5);
+          background-color: #EBF0F5;
+        }
+
+        .btnClass {
+          display: flex;
+          height: 29px;
+        }
+
+        .btnClass div:nth-child(1) {
+          display: flex;
+          justify-content: flex-start;
+        }
+
+        .btnClass div:nth-child(2) {
+          position: absolute;
+          top: 2px;
+          right: 0;
+          /*display: flex;*/
+          width: 180px;
+          /*justify-content: flex-end;*/
+        }
+
+        .searchInputContainer {
+          height: 28px;
+        }
+
+        .Pagination_container {
+          height: 44px;
+          position: absolute;
+          bottom: 0;
+          width: 100%;
+          /*display: flex;*/
+          /*justify-content: center;*/
+          /*align-items: center;*/
+
+          .Pagination_position {
+            height: 100%;
+            width: 100%;
+            position: relative;
+
+            .Pagination_content {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              width: 450px;
+              transform: translate(-50%, -50%);
+
+              .Pagination_box {
+                float: left;
+              }
+
+              //刷新按钮样式
+              .Refresh {
+                color: #0086E6;
+                display: block;
+                line-height: 22px;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+              }
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+
+  .el-menu {
+    border-right: 0px solid #fff !important;
+  }
+
+  //导航菜单背景颜色
+  .el-menu-item {
+    /*background-color: #fff !important;*/
+    padding-left: 10px !important;
+  }
+
+  .el-menu-item img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .el-menu-item:hover {
+    background-color: #E6F5FF !important;
+  }
+
+  .popupwindow_content {
+    overflow: hidden !important;
+  }
+</style>
